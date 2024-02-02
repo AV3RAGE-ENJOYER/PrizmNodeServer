@@ -1,0 +1,5 @@
+.git
+*.sql
+*.env
+*.exe
+logs.txt
