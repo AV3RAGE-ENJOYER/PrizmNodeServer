@@ -22,7 +22,7 @@ func main() {
 
 	gin.DefaultWriter = io.MultiWriter(f, os.Stdout)
 
-	db, err := database.NewDb("clients.sql")
+	db, err := database.NewDb("clients.db")
 
 	if err != nil {
 		fmt.Println(err)
