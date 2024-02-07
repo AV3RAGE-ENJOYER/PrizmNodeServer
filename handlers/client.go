@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"node/database"
+	"node/wireguard"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -67,8 +68,12 @@ func AddClient(db *database.Database) gin.HandlerFunc {
 			id, _ := strconv.Atoi(clientId[0])
 			expiryDate, _ := strconv.Atoi(clientExpiryDate[0])
 
+			wgController := wireguard.WgController{}
+
+			clientConf, publicKey, _ := wgController.AddClient(id)
+
 			r, err := db.AddClient(
-				id, expiryDate)
+				id, publicKey, clientConf, expiryDate)
 
 			if err != nil {
 				fmt.Println(r)

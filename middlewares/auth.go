@@ -14,7 +14,7 @@ func ApiTokenAuthMiddleware(db *database.Database) gin.HandlerFunc {
 
 		if providedApiKey != nil {
 			for _, apiKey := range apiKeys {
-				if apiKey.ApiKey == providedApiKey[0] && apiKey.AllowedIPs == c.ClientIP() {
+				if apiKey.ApiKey == providedApiKey[0] { // && apiKey.AllowedIPs == c.ClientIP() {
 					c.Next()
 					return
 				}

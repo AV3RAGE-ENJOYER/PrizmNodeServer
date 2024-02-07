@@ -2,8 +2,8 @@ package wireguard
 
 import (
 	"fmt"
+	"node/utils"
 	"os/exec"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -26,46 +26,50 @@ func (wgController *WgController) DumpClients() error {
 		return err
 	}
 
-	dump := strings.Split(string(out), "\n")
-
-	fmt.Println(dump)
-
-	interfaceInfo := strings.Fields(dump[0])
+	dump := strings.Fields(string(out))
 
 	wgController.Interface = WgInterface{
-		PrivateKey: interfaceInfo[0],
-		PublicKey:  interfaceInfo[1],
-		ListenPort: func() int {
-			port, _ := strconv.Atoi(interfaceInfo[2])
-			return port
-		}(),
-		FwMark: interfaceInfo[3],
+		PrivateKey: dump[0],
+		PublicKey:  dump[1],
+		ListenPort: utils.ToInt(dump[2]),
+		FwMark:     dump[3],
 	}
 
-	dump = dump[1:]
+	dump = dump[4:]
 
-	for _, client := range dump {
-		clientInfo := strings.Fields(client)
-		wgController.Clients = append(wgController.Clients, WgClient{
-			PublicKey:    clientInfo[0],
-			PresharedKey: clientInfo[1],
-			Endpoint:     clientInfo[2],
-			AllowedIPs:   clientInfo[3],
-			LatestHandshake: func() time.Time {
-				unixTime, _ := strconv.Atoi(clientInfo[4])
-				return time.Unix(int64(unixTime), 0)
-			}(),
-			TransferRx: func() int {
-				transferRx, _ := strconv.Atoi(clientInfo[5])
-				return transferRx
-			}(),
-			TransferTx: func() int {
-				transferTx, _ := strconv.Atoi(clientInfo[6])
-				return transferTx
-			}(),
-			PersistentKeepAlive: clientInfo[7],
-		})
+	for i := 0; i < len(dump)/8; i++ {
+		if dump != nil {
+			client := WgClient{
+				PublicKey:    dump[0],
+				PresharedKey: dump[1],
+				Endpoint:     dump[2],
+				AllowedIPs:   dump[3],
+				LatestHandshake: time.Unix(
+					int64(utils.ToInt(
+						dump[4])), 0),
+				TransferRx:          utils.ToInt(dump[5]),
+				TransferTx:          utils.ToInt(dump[6]),
+				PersistentKeepAlive: dump[7],
+			}
+
+			wgController.Clients = append(wgController.Clients, client)
+			dump = dump[8:]
+		}
+
 	}
 
 	return nil
+}
+
+func (wgController *WgController) AddClient(id int) (string, string, error) {
+	clientConf, err := exec.Command("python3", "/PrizmNodeServer/create_client.py", fmt.Sprintf("%v", id)).Output()
+
+	if err != nil {
+		fmt.Println(err)
+		return "", "", err
+	}
+
+	publicKey, _ := exec.Command("cat", fmt.Sprintf("/etc/wireguard/clients/%v_public.key", id)).Output()
+
+	return string(clientConf), string(publicKey), nil
 }

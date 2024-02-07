@@ -96,10 +96,10 @@ func (db *Database) GetClients() ([]Client, error) {
 	return clients, nil
 }
 
-func (db *Database) AddClient(id int, expiryDate int) (sql.Result, error) {
+func (db *Database) AddClient(id int, publicKey string, wireguardConfig string, expiryDate int) (sql.Result, error) {
 	r, err := db.Sql.Exec(
 		"INSERT INTO `clients` VALUES (?, ?, ?, ?)",
-		id, "test", "test", expiryDate)
+		id, publicKey, wireguardConfig, expiryDate)
 
 	return r, err
 }
